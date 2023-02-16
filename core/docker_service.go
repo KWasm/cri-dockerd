@@ -123,6 +123,7 @@ var internalLabelKeys = []string{containerTypeLabelKey, containerLogPathLabelKey
 func NewDockerService(
 	clientConfig *config.ClientConfig,
 	podSandboxImage string,
+	runtimeHandler map[string]string,
 	streamingConfig *streaming.Config,
 	pluginSettings *config.NetworkPluginSettings,
 	cgroupsName string,
@@ -145,6 +146,7 @@ func NewDockerService(
 		client:          c,
 		os:              config.RealOS{},
 		podSandboxImage: podSandboxImage,
+		runtimeHandler:  runtimeHandler,
 		streamingRuntime: &streaming.StreamingRuntime{
 			Client:      client,
 			ExecHandler: &NativeExecHandler{},
@@ -256,6 +258,7 @@ type dockerService struct {
 	client           libdocker.DockerClientInterface
 	os               config.OSInterface
 	podSandboxImage  string
+	runtimeHandler   map[string]string
 	streamingRuntime *streaming.StreamingRuntime
 	streamingServer  streaming.Server
 
