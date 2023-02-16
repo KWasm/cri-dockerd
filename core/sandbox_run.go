@@ -20,6 +20,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+
 	"github.com/Mirantis/cri-dockerd/config"
 	"github.com/Mirantis/cri-dockerd/utils/errors"
 	v1 "k8s.io/cri-api/pkg/apis/runtime/v1"
@@ -51,9 +52,6 @@ func (ds *dockerService) RunPodSandbox(
 	}
 
 	// Step 2: Create the sandbox container.
-	if r.GetRuntimeHandler() != "" && r.GetRuntimeHandler() != runtimeName {
-		return nil, fmt.Errorf("RuntimeHandler %q not supported", r.GetRuntimeHandler())
-	}
 	createConfig, err := ds.makeSandboxDockerConfig(containerConfig, image)
 	if err != nil {
 		return nil, fmt.Errorf(
@@ -62,6 +60,13 @@ func (ds *dockerService) RunPodSandbox(
 			err,
 		)
 	}
+	// Map Kubernetes runtimeClassName to Docker runtime.
+	runtimeHandler, err := ds.getRuntimeFromRuntimeClassName(r.GetRuntimeHandler())
+	if err != nil {
+		return nil, err
+	}
+	// TODO: find a better way to pass runtime from K8s Pod to containers
+	createConfig.Config.Labels[runtimeLabelName] = runtimeHandler
 	createResp, err := ds.client.CreateContainer(*createConfig)
 	if err != nil {
 		createResp, err = recoverFromCreationConflictIfNeeded(ds.client, *createConfig, err)

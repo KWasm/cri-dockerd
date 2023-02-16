@@ -65,6 +65,7 @@ func (ds *dockerService) CreateContainer(
 	}
 	containerName := makeContainerName(sandboxConfig, config)
 	terminationMessagePath, _ := config.Annotations["io.kubernetes.container.terminationMessagePath"]
+	json, _, err := ds.getPodSandboxDetails(podSandboxID)
 	createConfig := types.ContainerCreateConfig{
 		Name: containerName,
 		Config: &container.Config{
@@ -89,6 +90,7 @@ func (ds *dockerService) CreateContainer(
 			RestartPolicy: container.RestartPolicy{
 				Name: "no",
 			},
+			Runtime: json.Config.Labels[runtimeLabelName],
 		},
 	}
 

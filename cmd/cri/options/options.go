@@ -120,6 +120,10 @@ func NewContainerRuntimeOptions() *config.ContainerRuntimeOptions {
 		PodSandboxImage:           defaultPodSandboxImage,
 		ImagePullProgressDeadline: metav1.Duration{Duration: 1 * time.Minute},
 		NetworkPluginName:         "cni",
+		RuntimeHandler: []string{
+			"spin=io.containerd.spin.v1",
+			"wasmedge=io.containerd.wasmedge.v1",
+		},
 
 		CNIBinDir:   cniBinDir,
 		CNIConfDir:  cniConfDir,

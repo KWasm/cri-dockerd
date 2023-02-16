@@ -18,13 +18,14 @@ package core
 
 import (
 	"fmt"
+	"os"
+	"strings"
+	"time"
+
 	"github.com/Mirantis/cri-dockerd/libdocker"
 	"github.com/Mirantis/cri-dockerd/utils"
 	"github.com/Mirantis/cri-dockerd/utils/errors"
 	"k8s.io/kubernetes/pkg/credentialprovider"
-	"os"
-	"strings"
-	"time"
 
 	"github.com/Mirantis/cri-dockerd/config"
 	dockertypes "github.com/docker/docker/api/types"
@@ -47,13 +48,26 @@ const (
 	defaultSandboxOOMAdj int = -998
 
 	// Name of the underlying container runtime
-	runtimeName = "docker"
+	runtimeName      = "docker"
+	runtimeLabelName = "pod.spec.runtimeClassName"
 )
 
 var (
 	// Termination grace period
 	defaultSandboxGracePeriod = time.Duration(10) * time.Second
 )
+
+func (ds *dockerService) getRuntimeFromRuntimeClassName(runtimeClassName string) (string, error) {
+	if runtimeClassName == "" || runtimeClassName == runtimeName {
+		return runtimeClassName, nil
+	}
+	runtimeHandler, ok := ds.runtimeHandler[runtimeClassName]
+	if ok {
+		return runtimeHandler, nil
+	} else {
+		return "", fmt.Errorf("RuntimeHandler %q not supported", runtimeClassName)
+	}
+}
 
 // Returns whether the sandbox network is ready, and whether the sandbox is known
 func (ds *dockerService) getNetworkReady(podSandboxID string) (bool, bool) {
