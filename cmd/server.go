@@ -18,7 +18,9 @@ package cmd
 
 import (
 	"fmt"
+	"regexp"
 	"runtime"
+	"strings"
 
 	"github.com/Mirantis/cri-dockerd/backend"
 	"github.com/Mirantis/cri-dockerd/cmd/cri/options"
@@ -181,6 +183,18 @@ func RunCriDockerd(f *options.DockerCRIFlags, stopCh <-chan struct{}) error {
 		}
 	}
 
+	runtimeHandlerValidate := regexp.MustCompile(`^\w+=\w+\.[\w\.]+$`)
+	runtimeHandler := make(map[string]string)
+	for _, handler := range r.RuntimeHandler {
+		//TODO validate
+		valid := runtimeHandlerValidate.Match([]byte(handler))
+		if !valid {
+			logrus.Fatalf("Could not parse runtime handler \"%s\" parameter. Format shoud be \"runtimeClassName=io.containerd.runtime.v1\"", handler)
+		}
+		kv := strings.Split(handler, "=")
+		runtimeHandler[kv[0]] = kv[1]
+	}
+
 	// Initialize streaming configuration. (Not using TLS now)
 	streamingConfig := &streaming.Config{
 		// Use a relative redirect (no scheme or host).
@@ -196,6 +210,7 @@ func RunCriDockerd(f *options.DockerCRIFlags, stopCh <-chan struct{}) error {
 	ds, err := core.NewDockerService(
 		dockerClientConfig,
 		r.PodSandboxImage,
+		runtimeHandler,
 		streamingConfig,
 		&pluginSettings,
 		f.RuntimeCgroups,

@@ -83,6 +83,8 @@ type ContainerRuntimeOptions struct {
 	// HairpinMode is the mode used to allow endpoints of a Service to load
 	// balance back to themselves if they should try to access their own Service
 	HairpinMode HairpinMode
+	// RuntimeHandler is a slice of runtime handler mappings e.g. runc=iocontainerd.runc.v2
+	RuntimeHandler []string
 }
 
 // AddFlags has the set of flags needed by cri-dockerd
@@ -138,6 +140,13 @@ func (s *ContainerRuntimeOptions) AddFlags(fs *pflag.FlagSet) {
 		fmt.Sprintf(
 			"The address to bind the CRI streaming server to. If not specified, it will bind to all addresses.",
 		),
+	)
+
+	fs.StringSliceVar(
+		&s.RuntimeHandler,
+		"runtime-handler",
+		s.RuntimeHandler,
+		"Additional runtimes e.g. runc=io.containerd.runc.v2",
 	)
 	// Network plugin settings for Docker.
 	fs.StringVar(
